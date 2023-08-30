@@ -23,7 +23,7 @@ class ClearInsightGenerator extends Generator {
     );
     final eventsResponse = await client.get(
       Uri.parse(
-        'https://gist.githubusercontent.com/Joran-Dob/ee06567aa06cad977d21acd4a4e055b2/raw/f4392d8934deafdabfb9e7fa96c21561bbd75fba/events.json',
+        'https://gist.githubusercontent.com/Joran-Dob/ee06567aa06cad977d21acd4a4e055b2/raw/2ef8b9a458c3ce11a1c8cb4ce26b00f69c736f7a/events.json',
       ),
     );
     final eventsJson = jsonDecode(eventsResponse.body) as Map<String, dynamic>;
@@ -51,21 +51,35 @@ String _toEventFunction(EventModel event) {
       .map((parameter) =>
           '${parameter.required ? 'required' : ''} ${parameter.type} ${parameter.name.toCamelCase}')
       .join(', ');
-  final parameters = event.parameters
-      .map((parameter) => "'${parameter.name}': ${parameter.name.toCamelCase}")
-      .join(', ');
   return '''
     void ${event.toFunctionName}({$functionParameters,}) => logEvent(
       (
         id: '${event.id}',
         parameters: {
-          $parameters,
+          ${_toParametersRecords(event.parameters)}
         },
         name: '${event.name}',
       ),
     );
     
   ''';
+}
+
+String _toParametersRecords(
+  List<EventParameterModel> parameters,
+) {
+  final parametersBuffer = StringBuffer();
+  for (final parameter in parameters) {
+    parametersBuffer.write(
+      '''
+     '${parameter.id}': (
+        name: '${parameter.name}',
+        value: '${parameter.name}',
+      ),
+    ''',
+    );
+  }
+  return parametersBuffer.toString();
 }
 
 String _fileHeader({required String sourceUri}) {
